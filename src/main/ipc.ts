@@ -59,6 +59,7 @@ import { themeService } from './services/ThemeService'
 import VertexAIService from './services/VertexAIService'
 import { setOpenLinkExternal } from './services/WebviewService'
 import { windowService } from './services/WindowService'
+import { setCustomUserAgent, removeCustomUserAgent } from './services/WebviewService'
 import { calculateDirectorySize, getResourcePath } from './utils'
 import { decrypt, encrypt } from './utils/aes'
 import {
@@ -127,6 +128,15 @@ export function registerIpc(mainWindow: BrowserWindow, app: Electron.App) {
 
   ipcMain.handle(IpcChannel.App_Reload, () => mainWindow.reload())
   ipcMain.handle(IpcChannel.Open_Website, (_, url: string) => shell.openExternal(url))
+
+  // User-Agent management
+  ipcMain.handle(IpcChannel.App_SetCustomUserAgent, (_, urlPattern: string, userAgent: string) => {
+    setCustomUserAgent(urlPattern, userAgent)
+  })
+  
+  ipcMain.handle(IpcChannel.App_RemoveCustomUserAgent, (_, urlPattern: string) => {
+    removeCustomUserAgent(urlPattern)
+  })
 
   // Update
   ipcMain.handle(IpcChannel.App_ShowUpdateDialog, () => appUpdater.showUpdateDialog(mainWindow))

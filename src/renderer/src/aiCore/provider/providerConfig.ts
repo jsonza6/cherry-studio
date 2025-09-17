@@ -142,6 +142,26 @@ export function providerToAiSdkConfig(
         'X-Api-Key': baseConfig.apiKey
       }
     }
+    
+    // 特殊处理 User-Agent：确保自定义的 User-Agent 不被覆盖
+    if (actualProvider.extra_headers['User-Agent'] || actualProvider.extra_headers['user-agent']) {
+      const customUserAgent = actualProvider.extra_headers['User-Agent'] || actualProvider.extra_headers['user-agent']
+      extraOptions.headers = {
+        ...extraOptions.headers,
+        'User-Agent': customUserAgent
+      }
+      // 删除小写版本，避免重复
+      delete extraOptions.headers['user-agent']
+      
+      // 同时设置主进程的 User-Agent 处理，作为后备方案
+      if (actualProvider.apiHost) {
+        try {
+          window.api.setCustomUserAgent(actualProvider.apiHost, customUserAgent)
+        } catch (error) {
+          logger.warn('Failed to set custom User-Agent in main process:', error)
+        }
+      }
+    }
   }
 
   // copilot

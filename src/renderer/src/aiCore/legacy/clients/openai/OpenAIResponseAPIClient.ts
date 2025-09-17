@@ -138,7 +138,11 @@ export class OpenAIResponseAPIClient extends OpenAIBaseClient<
         baseURL: this.getBaseURL(),
         defaultHeaders: {
           ...this.defaultHeaders(),
-          ...this.provider.extra_headers
+          ...this.provider.extra_headers,
+          // 确保自定义的 User-Agent 能够正确设置
+          ...(this.provider.extra_headers?.['User-Agent'] || this.provider.extra_headers?.['user-agent'] 
+            ? { 'User-Agent': this.provider.extra_headers['User-Agent'] || this.provider.extra_headers['user-agent'] } 
+            : {})
         }
       })
     }

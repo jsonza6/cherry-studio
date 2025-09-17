@@ -78,6 +78,10 @@ const api = {
   isNotEmptyDir: (path: string) => ipcRenderer.invoke(IpcChannel.App_IsNotEmptyDir, path),
   relaunchApp: (options?: Electron.RelaunchOptions) => ipcRenderer.invoke(IpcChannel.App_RelaunchApp, options),
   openWebsite: (url: string) => ipcRenderer.invoke(IpcChannel.Open_Website, url),
+  setCustomUserAgent: (urlPattern: string, userAgent: string) => 
+    ipcRenderer.invoke(IpcChannel.App_SetCustomUserAgent, urlPattern, userAgent),
+  removeCustomUserAgent: (urlPattern: string) => 
+    ipcRenderer.invoke(IpcChannel.App_RemoveCustomUserAgent, urlPattern),
   getCacheSize: () => ipcRenderer.invoke(IpcChannel.App_GetCacheSize),
   clearCache: () => ipcRenderer.invoke(IpcChannel.App_ClearCache),
   logToMain: (source: LogSourceWithContext, level: LogLevel, message: string, data: any[]) =>

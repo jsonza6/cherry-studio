@@ -168,7 +168,11 @@ export abstract class OpenAIBaseClient<
           ...this.defaultHeaders(),
           ...this.provider.extra_headers,
           ...(this.provider.id === 'copilot' ? { 'editor-version': 'vscode/1.97.2' } : {}),
-          ...(this.provider.id === 'copilot' ? { 'copilot-vision-request': 'true' } : {})
+          ...(this.provider.id === 'copilot' ? { 'copilot-vision-request': 'true' } : {}),
+          // 确保自定义的 User-Agent 能够正确设置
+          ...(this.provider.extra_headers?.['User-Agent'] || this.provider.extra_headers?.['user-agent'] 
+            ? { 'User-Agent': this.provider.extra_headers['User-Agent'] || this.provider.extra_headers['user-agent'] } 
+            : {})
         }
       }) as TSdkInstance
     }

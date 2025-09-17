@@ -18,6 +18,8 @@ export enum IpcChannel {
   App_SetTestPlan = 'app:set-test-plan',
   App_SetTestChannel = 'app:set-test-channel',
   App_HandleZoomFactor = 'app:handle-zoom-factor',
+  App_SetCustomUserAgent = 'app:set-custom-user-agent',
+  App_RemoveCustomUserAgent = 'app:remove-custom-user-agent',
   App_Select = 'app:select',
   App_HasWritePermission = 'app:has-write-permission',
   App_ResolvePath = 'app:resolve-path',
