@@ -158,7 +158,7 @@ export function providerToAiSdkConfig(
         try {
           window.api.setCustomUserAgent(actualProvider.apiHost, customUserAgent)
         } catch (error) {
-          logger.warn('Failed to set custom User-Agent in main process:', error)
+          logger.warn('Failed to set custom User-Agent in main process:', error as Error)
         }
       }
     }
