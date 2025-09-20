@@ -8,6 +8,7 @@ on:
     paths:
       - 'src/main/services/WebviewService.ts'
       - 'src/main/services/WindowService.ts'
+      - '.github/workflows/test-user-agent-fix.yml'
 
 permissions:
   contents: write
