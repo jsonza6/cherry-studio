@@ -1,0 +1,149 @@
+name: Test User-Agent Fix
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - 'src/main/services/WebviewService.ts'
+      - 'src/main/services/WindowService.ts'
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  test-user-agent-fix:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v5
+        with:
+          ref: master
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install corepack
+        run: corepack enable && corepack prepare yarn@4.6.0 --activate
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+
+      - name: Cache yarn dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ steps.yarn-cache-dir-path.outputs.dir }}
+            node_modules
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Install Dependencies
+        run: yarn install
+
+      - name: Generate test build tag
+        id: build-tag
+        run: echo "tag=user-agent-fix-test-$(Get-Date -Format 'yyyyMMdd-HHmmss')" >> $GITHUB_OUTPUT
+        shell: pwsh
+
+      - name: Build Windows x64 Portable Only
+        run: |
+          yarn build:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_OPTIONS: --max-old-space-size=8192
+          MAIN_VITE_CHERRYIN_CLIENT_SECRET: ${{ secrets.MAIN_VITE_CHERRYIN_CLIENT_SECRET }}
+          MAIN_VITE_MINERU_API_KEY: ${{ vars.MAIN_VITE_MINERU_API_KEY }}
+          RENDERER_VITE_AIHUBMIX_SECRET: ${{ vars.RENDERER_VITE_AIHUBMIX_SECRET }}
+          RENDERER_VITE_PPIO_APP_SECRET: ${{ vars.RENDERER_VITE_PPIO_APP_SECRET }}
+
+      - name: Prepare test artifacts
+        shell: pwsh
+        run: |
+          mkdir -p test-artifacts
+          $buildTag = "${{ steps.build-tag.outputs.tag }}"
+          
+          # 只复制 Windows x64 portable 版本
+          $portableFile = Get-ChildItem -Path "dist" -Name "*-x64-portable.exe" | Select-Object -First 1
+          if ($portableFile) {
+            Copy-Item "dist\$portableFile" "test-artifacts\cherry-studio-$buildTag-x64-portable.exe"
+            Write-Host "Found portable file: $portableFile"
+          } else {
+            Write-Host "No x64 portable file found in dist directory"
+            Get-ChildItem -Path "dist" -Recurse | ForEach-Object { Write-Host "Found: $($_.FullName)" }
+          }
+
+      - name: Generate SHA256 checksum for test build
+        shell: pwsh
+        run: |
+          cd test-artifacts
+          echo "# SHA256 checksum for User-Agent Fix Test Build - $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" > SHA256SUMS.txt
+          Get-ChildItem -File | Where-Object { $_.Name -ne 'SHA256SUMS.txt' } | ForEach-Object {
+            $file = $_.Name
+            $hash = (Get-FileHash -Algorithm SHA256 $file).Hash.ToLower()
+            Add-Content -Path SHA256SUMS.txt -Value "$hash  $file"
+          }
+          cat SHA256SUMS.txt
+
+      - name: List test artifacts
+        shell: pwsh
+        run: |
+          Write-Host "Test artifacts to be uploaded:"
+          Get-ChildItem -Path "test-artifacts" -Recurse | ForEach-Object {
+            Write-Host "  $($_.FullName)"
+          }
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cherry-studio-user-agent-fix-test-${{ steps.build-tag.outputs.tag }}
+          path: test-artifacts/*
+          retention-days: 7
+          compression-level: 8
+
+      - name: Create test build summary
+        run: |
+          echo "## 🧪 User-Agent 修复测试构建" >> $GITHUB_STEP_SUMMARY
+          echo "此构建专门用于测试 extra_headers 自定义 user-agent 功能的修复。" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 修复内容" >> $GITHUB_STEP_SUMMARY
+          echo "- 在 WebviewService.ts 中添加了 initMainWindowUserAgent() 函数" >> $GITHUB_STEP_SUMMARY
+          echo "- 为主窗口的默认 session 添加了 webRequest 拦截器" >> $GITHUB_STEP_SUMMARY
+          echo "- 允许 extra_headers 中的 user-agent 覆盖默认的 Electron user-agent" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 测试方法" >> $GITHUB_STEP_SUMMARY
+          echo "1. 下载并运行 Windows x64 portable 版本" >> $GITHUB_STEP_SUMMARY
+          echo "2. 在 provider 配置中设置 extra_headers，包含自定义的 user-agent" >> $GITHUB_STEP_SUMMARY
+          echo "3. 发起 AI 请求" >> $GITHUB_STEP_SUMMARY
+          echo "4. 在浏览器开发者工具的网络面板中检查请求头" >> $GITHUB_STEP_SUMMARY
+          echo "5. 验证请求头中的 user-agent 是否为自定义值" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 构建信息" >> $GITHUB_STEP_SUMMARY
+          echo "- 构建时间: $(date +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_STEP_SUMMARY
+          echo "- 分支: master" >> $GITHUB_STEP_SUMMARY
+          echo "- 提交: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 文件校验和" >> $GITHUB_STEP_SUMMARY
+          echo "请在下载后验证文件完整性。" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🔧 Test User-Agent Fix Build" >> $GITHUB_STEP_SUMMARY
+          echo "This build is specifically for testing the extra_headers custom user-agent functionality fix." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Fix Details" >> $GITHUB_STEP_SUMMARY
+          echo "- Added initMainWindowUserAgent() function in WebviewService.ts" >> $GITHUB_STEP_SUMMARY
+          echo "- Added webRequest interceptor for main window's default session" >> $GITHUB_STEP_SUMMARY
+          echo "- Allow extra_headers user-agent to override default Electron user-agent" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Testing Instructions" >> $GITHUB_STEP_SUMMARY
+          echo "1. Download and run the Windows x64 portable version" >> $GITHUB_STEP_SUMMARY
+          echo "2. Set extra_headers in provider config with custom user-agent" >> $GITHUB_STEP_SUMMARY
+          echo "3. Make AI requests" >> $GITHUB_STEP_SUMMARY
+          echo "4. Check request headers in browser dev tools network panel" >> $GITHUB_STEP_SUMMARY
+          echo "5. Verify the user-agent in request headers is the custom value" >> $GITHUB_STEP_SUMMARY
