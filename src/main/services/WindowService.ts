@@ -15,7 +15,7 @@ import icon from '../../../build/icon.png?asset'
 import { titleBarOverlayDark, titleBarOverlayLight } from '../config'
 import { configManager } from './ConfigManager'
 import { contextMenu } from './ContextMenu'
-import { initSessionUserAgent } from './WebviewService'
+import { initSessionUserAgent, initMainWindowUserAgent } from './WebviewService'
 
 const DEFAULT_MINIWINDOW_WIDTH = 550
 const DEFAULT_MINIWINDOW_HEIGHT = 400
@@ -101,6 +101,9 @@ export class WindowService {
 
     //init the MinApp webviews' useragent
     initSessionUserAgent()
+    
+    //init the main window useragent to support extra_headers user-agent customization
+    initMainWindowUserAgent()
 
     return this.mainWindow
   }
