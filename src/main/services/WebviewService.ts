@@ -1,5 +1,8 @@
 import { session, shell, webContents } from 'electron'
 
+// 存储自定义 User-Agent 的映射
+const customUserAgents = new Map<string, string>()
+
 /**
  * init the useragent of the webview session
  * remove the CherryStudio and Electron from the useragent
@@ -20,24 +23,49 @@ export function initSessionUserAgent() {
 }
 
 /**
- * init the useragent of the main window session
- * This ensures that extra_headers user-agent settings work for main window requests
+ * 初始化主会话的 User-Agent 处理
+ * 支持自定义 User-Agent 的动态设置
  */
-export function initMainWindowUserAgent() {
-  const defaultSession = session.defaultSession
+export function initMainSessionUserAgent() {
+  const mainSession = session.defaultSession
   
-  // Set up webRequest handler to allow custom user-agent from extra_headers
-  defaultSession.webRequest.onBeforeSendHeaders((details, cb) => {
+  mainSession.webRequest.onBeforeSendHeaders((details, cb) => {
     const headers = { ...details.requestHeaders }
     
-    // Check if there's a custom user-agent in the request headers
-    // This allows extra_headers to override the default user-agent
-    if (details.requestHeaders['User-Agent']) {
-      headers['User-Agent'] = details.requestHeaders['User-Agent']
+    // 检查是否有为这个 URL 设置的自定义 User-Agent
+    const customUA = getCustomUserAgentForUrl(details.url)
+    if (customUA) {
+      headers['User-Agent'] = customUA
     }
     
     cb({ requestHeaders: headers })
   })
+}
+
+/**
+ * 为特定的 URL 模式设置自定义 User-Agent
+ */
+export function setCustomUserAgent(urlPattern: string, userAgent: string) {
+  customUserAgents.set(urlPattern, userAgent)
+}
+
+/**
+ * 移除特定 URL 模式的自定义 User-Agent
+ */
+export function removeCustomUserAgent(urlPattern: string) {
+  customUserAgents.delete(urlPattern)
+}
+
+/**
+ * 获取 URL 对应的自定义 User-Agent
+ */
+function getCustomUserAgentForUrl(url: string): string | null {
+  for (const [pattern, userAgent] of customUserAgents.entries()) {
+    if (url.includes(pattern)) {
+      return userAgent
+    }
+  }
+  return null
 }
 
 /**

@@ -133,6 +133,16 @@ export function providerToAiSdkConfig(
   // 添加额外headers
   if (actualProvider.extra_headers) {
     extraOptions.headers = actualProvider.extra_headers
+    
+    // 如果 extra_headers 中包含 user-agent，设置到主会话的 User-Agent 管理系统
+    if (actualProvider.extra_headers['User-Agent'] || actualProvider.extra_headers['user-agent']) {
+      const customUserAgent = actualProvider.extra_headers['User-Agent'] || actualProvider.extra_headers['user-agent']
+      // 为这个 provider 的 API 主机设置自定义 User-Agent
+      if (window.api?.webviewService?.setCustomUserAgent) {
+        window.api.webviewService.setCustomUserAgent(actualProvider.apiHost, customUserAgent)
+      }
+    }
+    
     // copy from openaiBaseClient/openaiResponseApiClient
     if (aiSdkProviderId === 'openai') {
       extraOptions.headers = {

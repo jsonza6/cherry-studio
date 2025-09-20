@@ -377,6 +377,12 @@ const api = {
     setSpellCheckEnabled: (webviewId: number, isEnable: boolean) =>
       ipcRenderer.invoke(IpcChannel.Webview_SetSpellCheckEnabled, webviewId, isEnable)
   },
+  webviewService: {
+    setCustomUserAgent: (urlPattern: string, userAgent: string) =>
+      ipcRenderer.invoke(IpcChannel.WebviewService_SetCustomUserAgent, urlPattern, userAgent),
+    removeCustomUserAgent: (urlPattern: string) =>
+      ipcRenderer.invoke(IpcChannel.WebviewService_RemoveCustomUserAgent, urlPattern)
+  },
   storeSync: {
     subscribe: () => ipcRenderer.invoke(IpcChannel.StoreSync_Subscribe),
     unsubscribe: () => ipcRenderer.invoke(IpcChannel.StoreSync_Unsubscribe),

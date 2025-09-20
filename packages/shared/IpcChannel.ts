@@ -51,6 +51,8 @@ export enum IpcChannel {
 
   Webview_SetOpenLinkExternal = 'webview:set-open-link-external',
   Webview_SetSpellCheckEnabled = 'webview:set-spell-check-enabled',
+  WebviewService_SetCustomUserAgent = 'webview-service:set-custom-user-agent',
+  WebviewService_RemoveCustomUserAgent = 'webview-service:remove-custom-user-agent',
 
   // Open
   Open_Path = 'open:path',

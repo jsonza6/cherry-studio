@@ -842,4 +842,15 @@ export function registerIpc(mainWindow: BrowserWindow, app: Electron.App) {
 
   // CherryIN
   ipcMain.handle(IpcChannel.Cherryin_GetSignature, (_, params) => generateSignature(params))
+
+  // WebviewService
+  ipcMain.handle(IpcChannel.WebviewService_SetCustomUserAgent, (_, urlPattern: string, userAgent: string) => {
+    const { setCustomUserAgent } = require('./services/WebviewService')
+    setCustomUserAgent(urlPattern, userAgent)
+  })
+  
+  ipcMain.handle(IpcChannel.WebviewService_RemoveCustomUserAgent, (_, urlPattern: string) => {
+    const { removeCustomUserAgent } = require('./services/WebviewService')
+    removeCustomUserAgent(urlPattern)
+  })
 }
