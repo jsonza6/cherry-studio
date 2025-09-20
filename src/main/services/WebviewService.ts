@@ -25,7 +25,6 @@ export function initSessionUserAgent() {
  */
 export function initMainWindowUserAgent() {
   const defaultSession = session.defaultSession
-  const originUA = defaultSession.getUserAgent()
   
   // Set up webRequest handler to allow custom user-agent from extra_headers
   defaultSession.webRequest.onBeforeSendHeaders((details, cb) => {
